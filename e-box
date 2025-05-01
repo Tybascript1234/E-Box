@@ -1,1 +1,83 @@
+class EBox extends HTMLElement {
+    constructor() {
+        super();
+        const shadow = this.attachShadow({ mode: 'open' });
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = `
+            <style>
+                #box {
+                    width: 200px;
+                    padding: 10px;
+                    border: 2px solid #333;
+                    border-radius: 10px;
+                    background: #f9f9f9;
+                    font-family: sans-serif;
+                    position: relative;
+                    cursor: move;
+                }
+                button {
+                    margin: 5px 0;
+                    padding: 5px 10px;
+                    border: none;
+                    background: #333;
+                    color: #fff;
+                    border-radius: 5px;
+                    cursor: pointer;
+                }
+                button:hover {
+                    background: #555;
+                }
+            </style>
+            <div id="box">
+                <p id="text">👋 مرحباً بك في e-box!</p>
+                <button id="colorBtn">غيّر اللون</button>
+                <button id="copyBtn">انسخ النص</button>
+            </div>
+        `;
+        shadow.appendChild(wrapper);
+    }
 
+    connectedCallback() {
+        const box = this.shadowRoot.querySelector('#box');
+        const text = this.shadowRoot.querySelector('#text');
+        const colorBtn = this.shadowRoot.querySelector('#colorBtn');
+        const copyBtn = this.shadowRoot.querySelector('#copyBtn');
+        let offsetX, offsetY, isDragging = false;
+
+        colorBtn.addEventListener('click', () => {
+            const colors = ['#f9f9f9', '#d1f7c4', '#c4dff7', '#f7c4c4'];
+            const current = box.style.backgroundColor || '#f9f9f9';
+            let next = colors[(colors.indexOf(current) + 1) % colors.length];
+            box.style.backgroundColor = next;
+        });
+
+        copyBtn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(text.textContent);
+                alert('✅ تم نسخ النص!');
+            } catch {
+                alert('❌ لم يتم النسخ!');
+            }
+        });
+
+        box.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            offsetX = e.offsetX;
+            offsetY = e.offsetY;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                box.style.position = 'absolute';
+                box.style.left = `${e.pageX - offsetX}px`;
+                box.style.top = `${e.pageY - offsetY}px`;
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+    }
+}
+
+customElements.define('e-box', EBox);
